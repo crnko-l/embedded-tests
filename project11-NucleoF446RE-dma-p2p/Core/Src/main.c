@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "string.h"
+#include "stdio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -25,7 +27,10 @@
 #define ADC_BUF_LEN 32
 
 uint16_t adc_buf[ADC_BUF_LEN];   // buffer filled by ADC DMA
-char msg[64];                    // UART transmit buffer
+char msg[256];                    // UART transmit buffer
+uint32_t adc_value = 0;
+uint32_t adc_raw = 0;     // raw ADC count (0–4095)
+float adc_voltage = 0.0f; // converted to volts
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,9 +50,9 @@ char msg[64];                    // UART transmit buffer
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
 
 UART_HandleTypeDef huart2;
-DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
 
@@ -66,27 +71,7 @@ UART_HandleTypeDef huart2;
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-// ADC Half-Transfer Callback
-void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
-{
-  if (hadc->Instance == ADC1)
-  {
-    // Example: send the first sample of the half-buffer
-    sprintf(msg, "ADC: %u\r\n", adc_buf[0]);
-    HAL_UART_Transmit_DMA(&huart2, (uint8_t*)msg, strlen(msg));
-  }
-}
 
-// ADC Transfer-Complete Callback
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
-{
-  if (hadc->Instance == ADC1)
-  {
-    // Example: send the first sample of the second half
-    sprintf(msg, "ADC: %u\r\n", adc_buf[ADC_BUF_LEN/2]);
-    HAL_UART_Transmit_DMA(&huart2, (uint8_t*)msg, strlen(msg));
-  }
-}
 /* USER CODE END 0 */
 
 /**
@@ -122,6 +107,7 @@ int main(void)
   MX_ADC1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, ADC_BUF_LEN);
 
   /* USER CODE END 2 */
@@ -133,6 +119,15 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	uint32_t sum = 0;
+	for (int i = 0; i < ADC_BUF_LEN; i++) sum += adc_buf[i];
+	float avg_counts = (float)sum / ADC_BUF_LEN;
+	float volts = (avg_counts / 4095.0f) * 3.3f;
+
+	int n = snprintf(msg, sizeof(msg), "Voltage: %.2f V\r\n", volts);
+	HAL_UART_Transmit(&huart2, (uint8_t*)msg, n, HAL_MAX_DELAY);
+
+    HAL_Delay(1000); // Update ~10 times per second
   }
   /* USER CODE END 3 */
 }
@@ -214,7 +209,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
@@ -276,12 +271,12 @@ static void MX_DMA_Init(void)
 {
 
   /* DMA controller clock enable */
-  __HAL_RCC_DMA1_CLK_ENABLE();
+  __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Stream6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 }
 
@@ -297,6 +292,7 @@ static void MX_GPIO_Init(void)
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
