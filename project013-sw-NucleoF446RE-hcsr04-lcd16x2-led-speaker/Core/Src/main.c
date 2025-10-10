@@ -18,12 +18,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "string.h"
-#include "stdio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "string.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -38,14 +37,48 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+#define DIST_BUFFER_SIZE 50
+float distance_buffer[DIST_BUFFER_SIZE];
+uint8_t distance_index = 0;
+uint8_t last_index = 0;   // index where last interrupt finished
 
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance == TIM3)
+    {
+        float sum = 0.0f;
+        uint8_t count = 0;
+        uint8_t i = last_index;
+
+        // Loop through circular buffer between last_index and current index
+        while (i != distance_index)
+        {
+            sum += distance_buffer[i];
+            count++;
+            i = (i + 1) % DIST_BUFFER_SIZE;
+        }
+
+        if (count > 0)
+        {
+            float avg = sum / count;
+            printf("[TIM3 INT] Average distance from last interrupt: %.2f cm\r\n", avg);
+        }
+
+        // Update last_index to the current index
+        last_index = distance_index;
+    }
+}
+
 /*--------------------------------------------------------------*/
 /* Utility: microsecond delay using TIM2                        */
 void delay_us(uint16_t us)
@@ -81,7 +114,11 @@ uint32_t read_ultrasonic(void)
 
     return local_time;
 }
-
+void store_distance(float value)
+{
+    distance_buffer[distance_index] = value;
+    distance_index = (distance_index + 1) % DIST_BUFFER_SIZE;
+}
 /*--------------------------------------------------------------*/
 int _write(int file, char *ptr, int len)
 {
@@ -95,6 +132,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -135,8 +173,10 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   MX_USART2_UART_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start(&htim2);   // start TIM2 once
+  HAL_TIM_Base_Start_IT(&htim3);
 
   /* USER CODE END 2 */
 
@@ -155,7 +195,8 @@ int main(void)
     /* USER CODE END WHILE */
       uint32_t time = read_ultrasonic();
       float distance = (float)time / 58.0;
-      printf("Distance: %.2f cm\r\n", distance);
+      store_distance(distance); // store in circular buffer
+      //printf("Distance: %.2f cm\r\n", distance);
       HAL_Delay(500);
     /* USER CODE BEGIN 3 */
   }
@@ -251,6 +292,51 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 8399;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 49999;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
 
 }
 
