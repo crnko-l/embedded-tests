@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DocklightProject version="2.3">
+  <ProjectSettings>
+    <ComPort>COM1</ComPort>
+    <BaudRate>9600</BaudRate>
+    <Parity>None</Parity>
+    <DataBits>8</DataBits>
+    <StopBits>1</StopBits>
+    <FlowControl>None</FlowControl>
+    <DisplayFormat>ASCII</DisplayFormat>
+    <TimestampMode>None</TimestampMode>
+    <LocalEcho>False</LocalEcho>
+    <SendOnEnter>False</SendOnEnter>
+  </ProjectSettings>
+
+  <SendSequences>
+    <Sequence>
+      <Index>0</Index>
+      <Name>LED ON</Name>
+      <Mode>ASCII</Mode>
+      <Data>LED ON\r\n</Data>
+      <Repeat>false</Repeat>
+      <RepeatDelay>5</RepeatDelay>
+      <ChecksumEnabled>false</ChecksumEnabled>
+    </Sequence>
+
+    <Sequence>
+      <Index>1</Index>
+      <Name>LED OFF</Name>
+      <Mode>ASCII</Mode>
+      <Data>LED OFF\r\n</Data>
+      <Repeat>false</Repeat>
+      <RepeatDelay>5</RepeatDelay>
+      <ChecksumEnabled>false</ChecksumEnabled>
+    </Sequence>
+
+    <Sequence>
+      <Index>2</Index>
+      <Name>STATUS</Name>
+      <Mode>ASCII</Mode>
+      <Data>STATUS\r\n</Data>
+      <Repeat>false</Repeat>
+      <RepeatDelay>5</RepeatDelay>
+      <ChecksumEnabled>false</ChecksumEnabled>
+    </Sequence>
+  </SendSequences>
+
+  <ReceiveSequences />
+</DocklightProject>
