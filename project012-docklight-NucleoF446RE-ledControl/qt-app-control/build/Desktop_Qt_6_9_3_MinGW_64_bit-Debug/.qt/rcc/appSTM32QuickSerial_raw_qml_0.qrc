@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/STM32QuickSerial/">
+    <file alias="Main.qml">E:/Projects/qt/untitled1/Main.qml</file>
+  </qresource>
+</RCC>
+

@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := project9-NucleoF446RE-dma-m2m
+BUILD_ARTIFACT_NAME := project009-NucleoF446RE-dma-m2m
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-project9-NucleoF446RE-dma-m2m.elf \
+project009-NucleoF446RE-dma-m2m.elf \
 
 MAP_FILES += \
-project9-NucleoF446RE-dma-m2m.map \
+project009-NucleoF446RE-dma-m2m.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-project9-NucleoF446RE-dma-m2m.list \
+project009-NucleoF446RE-dma-m2m.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: project9-NucleoF446RE-dma-m2m.elf secondary-outputs
+main-build: project009-NucleoF446RE-dma-m2m.elf secondary-outputs
 
 # Tool invocations
-project9-NucleoF446RE-dma-m2m.elf project9-NucleoF446RE-dma-m2m.map: $(OBJS) $(USER_OBJS) E:\Projects\embedded-tests\project9-NucleoF446RE-dma-m2m\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "project9-NucleoF446RE-dma-m2m.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\Projects\embedded-tests\project9-NucleoF446RE-dma-m2m\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="project9-NucleoF446RE-dma-m2m.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+project009-NucleoF446RE-dma-m2m.elf project009-NucleoF446RE-dma-m2m.map: $(OBJS) $(USER_OBJS) E:\Projects\embedded-tests\project009-NucleoF446RE-dma-m2m\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "project009-NucleoF446RE-dma-m2m.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\Projects\embedded-tests\project009-NucleoF446RE-dma-m2m\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="project009-NucleoF446RE-dma-m2m.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-project9-NucleoF446RE-dma-m2m.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "project9-NucleoF446RE-dma-m2m.list"
+project009-NucleoF446RE-dma-m2m.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "project009-NucleoF446RE-dma-m2m.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) default.size.stdout project9-NucleoF446RE-dma-m2m.elf project9-NucleoF446RE-dma-m2m.list project9-NucleoF446RE-dma-m2m.map
+	-$(RM) default.size.stdout project009-NucleoF446RE-dma-m2m.elf project009-NucleoF446RE-dma-m2m.list project009-NucleoF446RE-dma-m2m.map
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
