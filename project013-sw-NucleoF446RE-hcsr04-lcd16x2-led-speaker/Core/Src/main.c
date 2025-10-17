@@ -41,6 +41,9 @@
 float distance_buffer[DIST_BUFFER_SIZE];
 uint8_t distance_index = 0;
 uint8_t last_index = 0;   // index where last interrupt finished
+float lower_limit = 20.0;
+float upper_limit= 100.0;
+uint8_t rx_byte;
 
 /* USER CODE END PM */
 
@@ -51,6 +54,23 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+uint16_t hdlc_crc16(uint8_t *data, uint16_t length)
+{
+    uint16_t crc = 0xFFFF;
+    for (uint16_t i = 0; i < length; i++)
+    {
+        crc ^= data[i];
+        for (uint8_t j = 0; j < 8; j++)
+        {
+            if (crc & 0x0001)
+                crc = (crc >> 1) ^ 0x8408;
+            else
+                crc >>= 1;
+        }
+    }
+    crc = ~crc;
+    return crc;
+}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
@@ -71,13 +91,67 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         if (count > 0)
         {
             float avg = sum / count;
-            printf("[TIM3 INT] Average distance from last interrupt: %.2f cm\r\n", avg);
+            //printf("[TIM3 INT] Average distance from last interrupt: %.2f cm\r\n", avg);
         }
 
         // Update last_index to the current index
         last_index = distance_index;
     }
 }
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    static uint8_t rx_state = 0;
+    static uint8_t cmd = 0;
+
+
+    if (huart->Instance == USART2)
+    {
+        switch (rx_state)
+        {
+        case 0: // Waiting for start of frame
+            if (rx_byte == 0x7E)
+                rx_state = 1;
+            break;
+
+        case 1: // Expecting command byte
+            cmd = rx_byte;
+            rx_state = 2;
+            break;
+
+        case 2: // Expecting end of frame
+            if (rx_byte == 0x7E)
+            {
+                if (cmd == 0x01)
+                {
+                    uint8_t frame[20];
+                    uint8_t idx = 0;
+                    frame[idx++] = 0x7E; // SOF
+
+                    memcpy(&frame[idx], &lower_limit, 4);
+                    idx += 4;
+                    memcpy(&frame[idx], &upper_limit, 4);
+                    idx += 4;
+
+                    uint16_t crc = hdlc_crc16(&frame[1], 8); // payload only
+                    frame[idx++] = (uint8_t)(crc & 0xFF);    // CRC low
+                    frame[idx++] = (uint8_t)(crc >> 8);      // CRC high
+                    frame[idx++] = 0x7E; // EOF
+
+                    HAL_UART_Transmit(&huart2, frame, idx, HAL_MAX_DELAY);
+                }
+            }
+
+            // Reset state machine for next frame
+            rx_state = 0;
+            break;
+        }
+
+        // Always re-enable UART reception
+        HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
+    }
+}
+
 
 /*--------------------------------------------------------------*/
 /* Utility: microsecond delay using TIM2                        */
@@ -177,6 +251,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start(&htim2);   // start TIM2 once
   HAL_TIM_Base_Start_IT(&htim3);
+  HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
 
   /* USER CODE END 2 */
 
@@ -197,10 +272,10 @@ int main(void)
       float distance = (float)time / 58.0;
       store_distance(distance); // store in circular buffer
       //printf("Distance: %.2f cm\r\n", distance);
-      if (distance < 20) {
+      if (distance < lower_limit) {
     	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET); // turn led on
     	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET); // turn buzzer off
-      } else if (distance > 100) {
+      } else if (distance > upper_limit) {
     	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET); // turn led off
     	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET); // turn buzzer on
       } else {
