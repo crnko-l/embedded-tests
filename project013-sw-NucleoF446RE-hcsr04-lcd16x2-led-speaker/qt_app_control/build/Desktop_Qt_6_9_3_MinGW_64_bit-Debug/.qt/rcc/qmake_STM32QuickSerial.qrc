@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/STM32QuickSerial">
+    <file alias="qmldir">E:/Projects/qt/untitled2/build/Desktop_Qt_6_9_3_MinGW_64_bit-Debug/STM32QuickSerial/qmldir</file>
+  </qresource>
+</RCC>
+
