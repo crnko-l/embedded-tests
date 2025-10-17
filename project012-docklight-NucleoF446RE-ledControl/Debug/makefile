@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := project012-docklight-NucleoF446RE-blinkingLed
+BUILD_ARTIFACT_NAME := project012-docklight-NucleoF446RE-ledControl
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-project012-docklight-NucleoF446RE-blinkingLed.elf \
+project012-docklight-NucleoF446RE-ledControl.elf \
 
 MAP_FILES += \
-project012-docklight-NucleoF446RE-blinkingLed.map \
+project012-docklight-NucleoF446RE-ledControl.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-project012-docklight-NucleoF446RE-blinkingLed.list \
+project012-docklight-NucleoF446RE-ledControl.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: project012-docklight-NucleoF446RE-blinkingLed.elf secondary-outputs
+main-build: project012-docklight-NucleoF446RE-ledControl.elf secondary-outputs
 
 # Tool invocations
-project012-docklight-NucleoF446RE-blinkingLed.elf project012-docklight-NucleoF446RE-blinkingLed.map: $(OBJS) $(USER_OBJS) E:\Projects\embedded-tests\project012-docklight-NucleoF446RE-blinkingLed\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "project012-docklight-NucleoF446RE-blinkingLed.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\Projects\embedded-tests\project012-docklight-NucleoF446RE-blinkingLed\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="project012-docklight-NucleoF446RE-blinkingLed.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
+project012-docklight-NucleoF446RE-ledControl.elf project012-docklight-NucleoF446RE-ledControl.map: $(OBJS) $(USER_OBJS) E:\Projects\embedded-tests\project012-docklight-NucleoF446RE-ledControl\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "project012-docklight-NucleoF446RE-ledControl.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\Projects\embedded-tests\project012-docklight-NucleoF446RE-ledControl\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="project012-docklight-NucleoF446RE-ledControl.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-project012-docklight-NucleoF446RE-blinkingLed.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "project012-docklight-NucleoF446RE-blinkingLed.list"
+project012-docklight-NucleoF446RE-ledControl.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "project012-docklight-NucleoF446RE-ledControl.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) default.size.stdout project012-docklight-NucleoF446RE-blinkingLed.elf project012-docklight-NucleoF446RE-blinkingLed.list project012-docklight-NucleoF446RE-blinkingLed.map
+	-$(RM) default.size.stdout project012-docklight-NucleoF446RE-ledControl.elf project012-docklight-NucleoF446RE-ledControl.list project012-docklight-NucleoF446RE-ledControl.map
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)

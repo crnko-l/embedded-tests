@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := project11-NucleoF446RE-dma-p2p
+BUILD_ARTIFACT_NAME := project011-NucleoF446RE-dma-p2p
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-project11-NucleoF446RE-dma-p2p.elf \
+project011-NucleoF446RE-dma-p2p.elf \
 
 MAP_FILES += \
-project11-NucleoF446RE-dma-p2p.map \
+project011-NucleoF446RE-dma-p2p.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-project11-NucleoF446RE-dma-p2p.list \
+project011-NucleoF446RE-dma-p2p.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: project11-NucleoF446RE-dma-p2p.elf secondary-outputs
+main-build: project011-NucleoF446RE-dma-p2p.elf secondary-outputs
 
 # Tool invocations
-project11-NucleoF446RE-dma-p2p.elf project11-NucleoF446RE-dma-p2p.map: $(OBJS) $(USER_OBJS) E:\Projects\embedded-tests\project11-NucleoF446RE-dma-p2p\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "project11-NucleoF446RE-dma-p2p.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\Projects\embedded-tests\project11-NucleoF446RE-dma-p2p\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="project11-NucleoF446RE-dma-p2p.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
+project011-NucleoF446RE-dma-p2p.elf project011-NucleoF446RE-dma-p2p.map: $(OBJS) $(USER_OBJS) E:\Projects\embedded-tests\project011-NucleoF446RE-dma-p2p\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "project011-NucleoF446RE-dma-p2p.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\Projects\embedded-tests\project011-NucleoF446RE-dma-p2p\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="project011-NucleoF446RE-dma-p2p.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-project11-NucleoF446RE-dma-p2p.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "project11-NucleoF446RE-dma-p2p.list"
+project011-NucleoF446RE-dma-p2p.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "project011-NucleoF446RE-dma-p2p.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) default.size.stdout project11-NucleoF446RE-dma-p2p.elf project11-NucleoF446RE-dma-p2p.list project11-NucleoF446RE-dma-p2p.map
+	-$(RM) default.size.stdout project011-NucleoF446RE-dma-p2p.elf project011-NucleoF446RE-dma-p2p.list project011-NucleoF446RE-dma-p2p.map
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)

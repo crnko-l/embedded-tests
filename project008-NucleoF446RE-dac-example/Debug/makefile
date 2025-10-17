@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := project8-NucleoF446RE-dac-example
+BUILD_ARTIFACT_NAME := project008-NucleoF446RE-dac-example
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-project8-NucleoF446RE-dac-example.elf \
+project008-NucleoF446RE-dac-example.elf \
 
 MAP_FILES += \
-project8-NucleoF446RE-dac-example.map \
+project008-NucleoF446RE-dac-example.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-project8-NucleoF446RE-dac-example.list \
+project008-NucleoF446RE-dac-example.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: project8-NucleoF446RE-dac-example.elf secondary-outputs
+main-build: project008-NucleoF446RE-dac-example.elf secondary-outputs
 
 # Tool invocations
-project8-NucleoF446RE-dac-example.elf project8-NucleoF446RE-dac-example.map: $(OBJS) $(USER_OBJS) E:\Projects\embedded-tests\project8-NucleoF446RE-dac-example\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "project8-NucleoF446RE-dac-example.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\Projects\embedded-tests\project8-NucleoF446RE-dac-example\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="project8-NucleoF446RE-dac-example.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+project008-NucleoF446RE-dac-example.elf project008-NucleoF446RE-dac-example.map: $(OBJS) $(USER_OBJS) E:\Projects\embedded-tests\project008-NucleoF446RE-dac-example\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "project008-NucleoF446RE-dac-example.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\Projects\embedded-tests\project008-NucleoF446RE-dac-example\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="project008-NucleoF446RE-dac-example.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-project8-NucleoF446RE-dac-example.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "project8-NucleoF446RE-dac-example.list"
+project008-NucleoF446RE-dac-example.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "project008-NucleoF446RE-dac-example.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) default.size.stdout project8-NucleoF446RE-dac-example.elf project8-NucleoF446RE-dac-example.list project8-NucleoF446RE-dac-example.map
+	-$(RM) default.size.stdout project008-NucleoF446RE-dac-example.elf project008-NucleoF446RE-dac-example.list project008-NucleoF446RE-dac-example.map
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)

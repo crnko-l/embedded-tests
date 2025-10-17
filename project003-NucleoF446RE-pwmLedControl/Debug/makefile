@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (12.3.rel1)
+# Toolchain: GNU Tools for STM32 (13.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := pwmLedControl
+BUILD_ARTIFACT_NAME := project003-NucleoF446RE-pwmLedControl
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-pwmLedControl.elf \
+project003-NucleoF446RE-pwmLedControl.elf \
 
 MAP_FILES += \
-pwmLedControl.map \
+project003-NucleoF446RE-pwmLedControl.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-pwmLedControl.list \
+project003-NucleoF446RE-pwmLedControl.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: pwmLedControl.elf secondary-outputs
+main-build: project003-NucleoF446RE-pwmLedControl.elf secondary-outputs
 
 # Tool invocations
-pwmLedControl.elf pwmLedControl.map: $(OBJS) $(USER_OBJS) C:\Users\pc\STM32CubeIDE\workspace_1.17.0\pwmLedControl\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "pwmLedControl.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\pc\STM32CubeIDE\workspace_1.17.0\pwmLedControl\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="pwmLedControl.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+project003-NucleoF446RE-pwmLedControl.elf project003-NucleoF446RE-pwmLedControl.map: $(OBJS) $(USER_OBJS) E:\Projects\embedded-tests\project003-NucleoF446RE-pwmLedControl\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "project003-NucleoF446RE-pwmLedControl.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\Projects\embedded-tests\project003-NucleoF446RE-pwmLedControl\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="project003-NucleoF446RE-pwmLedControl.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-pwmLedControl.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "pwmLedControl.list"
+project003-NucleoF446RE-pwmLedControl.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "project003-NucleoF446RE-pwmLedControl.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) default.size.stdout pwmLedControl.elf pwmLedControl.list pwmLedControl.map
+	-$(RM) default.size.stdout project003-NucleoF446RE-pwmLedControl.elf project003-NucleoF446RE-pwmLedControl.list project003-NucleoF446RE-pwmLedControl.map
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
