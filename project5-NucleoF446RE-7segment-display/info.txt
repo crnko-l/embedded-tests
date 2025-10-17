@@ -1,0 +1,13 @@
+segmet info: https://www.electronicsforu.com/resources/7-segment-display-pinout-understanding
+
+
+f446re page 48/49: https://www.st.com/resource/en/user_manual/um1724-stm32-nucleo64-boards-mb1136-stmicroelectronics.pdf
+
+g - PA5 - CN5 D13
+f - PA6 - CN5 D12
+a - PAO - CN8 A0
+b - PA1 - CN8 A1
+e - PA4 - CN8 A2
+d - PA3 - CN9 D0
+c - PA2 - CN9 D1
+cc - 3.3v
