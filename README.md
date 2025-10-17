@@ -1,8 +1,10 @@
 # embedded-tests
 
+##test
 This repository is created **only for learning and practice purposes**.
 
 Nothing in this project is intended for commercial use or to generate any kind of profit.  
+
 All code, examples, and materials here are purely for **educational and experimental** purposes. Use at your own discretion.
 ---
 
