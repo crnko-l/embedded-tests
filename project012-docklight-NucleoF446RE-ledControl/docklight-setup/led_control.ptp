@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DocklightProtocolFile version="2.3">
+  <Protocol>
+    <Sequence>
+      <Index>0</Index>
+      <Name>LED ON</Name>
+      <Mode>ASCII</Mode>
+      <Data>LED ON\r\n</Data>
+      <ExpectedAnswer>OK LED=1\r\n</ExpectedAnswer>
+      <Color>255,255,0</Color>
+    </Sequence>
+
+    <Sequence>
+      <Index>1</Index>
+      <Name>LED OFF</Name>
+      <Mode>ASCII</Mode>
+      <Data>LED OFF\r\n</Data>
+      <ExpectedAnswer>OK LED=0\r\n</ExpectedAnswer>
+      <Color>0,255,255</Color>
+    </Sequence>
+
+    <Sequence>
+      <Index>2</Index>
+      <Name>STATUS</Name>
+      <Mode>ASCII</Mode>
+      <Data>STATUS\r\n</Data>
+      <ExpectedAnswer>STATUS LED=1\r\n</ExpectedAnswer>
+      <Color>192,192,192</Color>
+    </Sequence>
+  </Protocol>
+</DocklightProtocolFile>
