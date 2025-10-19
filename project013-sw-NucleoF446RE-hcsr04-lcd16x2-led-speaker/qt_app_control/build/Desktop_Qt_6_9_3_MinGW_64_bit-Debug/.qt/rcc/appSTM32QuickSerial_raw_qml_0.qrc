@@ -1,6 +1,6 @@
 <RCC>
   <qresource prefix="/STM32QuickSerial/">
-    <file alias="Main.qml">E:/Projects/qt/untitled2/Main.qml</file>
+    <file alias="Main.qml">E:/Projects/embedded-tests/project013-sw-NucleoF446RE-hcsr04-lcd16x2-led-speaker/qt_app_control/Main.qml</file>
   </qresource>
 </RCC>
 

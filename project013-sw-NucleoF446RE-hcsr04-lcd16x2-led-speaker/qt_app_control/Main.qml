@@ -15,25 +15,25 @@ ApplicationWindow {
         ComboBox {
             id: portSelector
             Layout.fillWidth: true
-            model: SerialManager.availablePorts()
+            model: serialManager.availablePorts()
         }
 
         Button {
             Layout.fillWidth: true
-            text: SerialManager.connected ? "Disconnect" : "Connect"
-            onClicked: SerialManager.connected
-                       ? SerialManager.disconnectPort()
-                       : SerialManager.connectPort(portSelector.currentText)
+            text: serialManager.connected ? "Disconnect" : "Connect"
+            onClicked: serialManager.connected
+                       ? serialManager.disconnectPort()
+                       : serialManager.connectPort(portSelector.currentText)
         }
 
         Button {
             Layout.fillWidth: true
             text: "Request Limits"
-            enabled: SerialManager.connected
-            onClicked: SerialManager.requestLimits()
+            enabled: serialManager.connected
+            onClicked: serialManager.requestLimits()
         }
 
-        Label { text: "Lower Limit: " + SerialManager.lowerLimit.toFixed(2) + " cm" }
-        Label { text: "Upper Limit: " + SerialManager.upperLimit.toFixed(2) + " cm" }
+        Label { text: "Lower Limit: " + serialManager.lowerLimit.toFixed(2) + " cm" }
+        Label { text: "Upper Limit: " + serialManager.upperLimit.toFixed(2) + " cm" }
     }
 }

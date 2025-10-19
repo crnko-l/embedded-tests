@@ -1,0 +1,5 @@
+../Core/Src/hdlc.c:7:13:hdlc_tx_byte	16	static
+../Core/Src/hdlc.c:12:13:hdlc_esc_tx_byte	16	static
+../Core/Src/hdlc.c:22:6:hdlc_init	8	static
+../Core/Src/hdlc.c:28:6:hdlc_process_rx_byte	24	static
+../Core/Src/hdlc.c:73:6:hdlc_tx_raw_frame_oneshot	24	static

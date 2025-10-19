@@ -34,7 +34,7 @@ endif()
 set(__QT_DEPLOY_SYSTEM_NAME "Windows")
 set(__QT_DEPLOY_IS_SHARED_LIBS_BUILD "ON")
 set(__QT_DEPLOY_TOOL "E:/Program_files/Qt/6.9.3/mingw_64/bin/windeployqt.exe")
-set(__QT_DEPLOY_IMPL_DIR "E:/Projects/qt/untitled2/build/Desktop_Qt_6_9_3_MinGW_64_bit-Debug/.qt")
+set(__QT_DEPLOY_IMPL_DIR "E:/Projects/embedded-tests/project013-sw-NucleoF446RE-hcsr04-lcd16x2-led-speaker/qt_app_control/build/Desktop_Qt_6_9_3_MinGW_64_bit-Debug/.qt")
 set(__QT_DEPLOY_VERBOSE "")
 set(__QT_CMAKE_EXPORT_NAMESPACE "Qt6")
 set(__QT_DEPLOY_GENERATOR_IS_MULTI_CONFIG "0")
@@ -58,7 +58,7 @@ set(__QT_DEPLOY_QT_DEBUG_POSTFIX "")
 
 # Define the CMake commands to be made available during deployment.
 set(__qt_deploy_support_files
-    "E:/Projects/qt/untitled2/build/Desktop_Qt_6_9_3_MinGW_64_bit-Debug/.qt/QtDeployTargets.cmake"
+    "E:/Projects/embedded-tests/project013-sw-NucleoF446RE-hcsr04-lcd16x2-led-speaker/qt_app_control/build/Desktop_Qt_6_9_3_MinGW_64_bit-Debug/.qt/QtDeployTargets.cmake"
     "E:/Program_files/Qt/6.9.3/mingw_64/lib/cmake/Qt6Core/Qt6CoreDeploySupport.cmake"
     "E:/Program_files/Qt/6.9.3/mingw_64/lib/cmake/Qt6Qml/Qt6QmlDeploySupport.cmake"
 )

@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
     SerialManager serialManager;
-    engine.rootContext()->setContextProperty("SerialManager", &serialManager);
+    engine.rootContext()->setContextProperty("serialManager", &serialManager);
 
     const QUrl url(QStringLiteral("qrc:/STM32QuickSerial/Main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
