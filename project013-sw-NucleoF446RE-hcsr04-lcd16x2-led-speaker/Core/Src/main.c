@@ -172,24 +172,18 @@ void delay_us(uint16_t us)
 uint32_t read_ultrasonic(void)
 {
     uint32_t local_time = 0;
-
     // Ensure trigger low
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
     HAL_Delay(2);
-
     // Send 10 µs pulse
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
     delay_us(10);
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
-
     // Wait for ECHO to go high
     while (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6) == GPIO_PIN_RESET);
-
     __HAL_TIM_SET_COUNTER(&htim2, 0); // start counting
-
     // Wait for ECHO to go low
     while (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6) == GPIO_PIN_SET);
-
     local_time = __HAL_TIM_GET_COUNTER(&htim2);
 
     return local_time;
@@ -198,6 +192,26 @@ void store_distance(float value)
 {
     distance_buffer[distance_index] = value;
     distance_index = (distance_index + 1) % DIST_BUFFER_SIZE;
+}
+void check_distance_warning(float distance){
+    if (distance < lower_limit) {
+  	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET); // turn led on
+  	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET); // turn buzzer off
+    } else if (distance > upper_limit) {
+  	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET); // turn led off
+  	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET); // turn buzzer on
+    } else {
+  	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET); // turn led off
+  	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET); // turn buzzer off
+    }
+}
+
+uint32_t read_potentiometer() {
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+    uint32_t adc_val = HAL_ADC_GetValue(&hadc1);
+    HAL_ADC_Stop(&hadc1);
+    return adc_val;
 }
 
 /*--------------------------------------------------------------*/
@@ -271,13 +285,18 @@ int main(void)
   else
       printf("LCD not responding!\r\n");
   lcd_put_cur(0, 0);
-  lcd_send_string("Hello, World!");
+  lcd_send_string("init");
   lcd_put_cur(1, 0);
-  lcd_send_string("STM32 + asd");
+  lcd_send_string("lcd");
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  char buf[16];
+  sprintf(buf, "UL:%.1f LL:%.1f", upper_limit, lower_limit);
+  lcd_clear();
+  lcd_put_cur(0, 0);
+  lcd_send_string(buf);
   /*
   Distance=Speed of Sound×Time
   One-way distance=(Speed of Sound)×(Time)/2
@@ -291,27 +310,17 @@ int main(void)
       uint32_t time = read_ultrasonic();
       float distance = (float)time / 58.0;
       store_distance(distance); // store in circular buffer
-      //printf("Distance: %.2f cm\r\n", distance);
-      if (distance < lower_limit) {
-    	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET); // turn led on
-    	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET); // turn buzzer off
-      } else if (distance > upper_limit) {
-    	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET); // turn led off
-    	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET); // turn buzzer on
-      } else {
-    	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET); // turn led off
-    	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET); // turn buzzer off
-      }
-      HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-
-      HAL_ADC_Start(&hadc1);
-      HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-      uint32_t adc_val = HAL_ADC_GetValue(&hadc1);
-      HAL_ADC_Stop(&hadc1);
+      check_distance_warning(distance);
+      uint32_t adc_val = read_potentiometer();
 
       float voltage = (3.3f * adc_val) / 4095.0f;
       printf("ADC raw: %lu   Voltage: %.2f V\r\n", adc_val, voltage);
 
+      lcd_put_cur(1, 0);
+      sprintf(buf, "S:%.1f Dis:%.1f", voltage, distance);
+      lcd_send_string(buf);
+
+      HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
       HAL_Delay(500);
     /* USER CODE END WHILE */
 
