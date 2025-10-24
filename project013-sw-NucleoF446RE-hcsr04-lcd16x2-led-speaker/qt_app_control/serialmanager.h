@@ -2,6 +2,7 @@
 #include <QObject>
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#include <QTimer>
 
 class SerialManager : public QObject
 {
@@ -52,4 +53,7 @@ private:
     float m_upper_limit = 0.0f;
     float m_scaling_factor = 0.0f;
     float m_distance = 0.0f;
+    QTimer m_poll_timer;
+    int poll_step = 0;
+
 };

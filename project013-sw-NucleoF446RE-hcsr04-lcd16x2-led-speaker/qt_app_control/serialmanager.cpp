@@ -42,6 +42,42 @@ static const quint16 crc16_table_inline[256] = {
     0x7BC7,0x6A4E,0x58D5,0x495C,0x3DE3,0x2C6A,0x1EF1,0x0F78
 };
 
+static constexpr quint8 HDLC_FLAG_SOF       = 0x7E;
+static constexpr quint8 HDLC_CONTROL_ESCAPE = 0x7D;
+static constexpr quint8 HDLC_ESCAPE_BIT     = 0x20;
+
+static QByteArray hdlcEscape(const QByteArray &in)
+{
+    QByteArray out;
+    out.reserve(in.size() + 8);
+    for (quint8 b : in) {
+        if (b == HDLC_FLAG_SOF || b == HDLC_CONTROL_ESCAPE) {
+            out.append(char(HDLC_CONTROL_ESCAPE));
+            out.append(char(b ^ HDLC_ESCAPE_BIT));
+        } else {
+            out.append(char(b));
+        }
+    }
+    return out;
+}
+
+static QByteArray hdlcUnescape(const QByteArray &in)
+{
+    QByteArray out;
+    out.reserve(in.size());
+    bool esc = false;
+    for (quint8 b : in) {
+        if (!esc) {
+            if (b == HDLC_CONTROL_ESCAPE) { esc = true; }
+            else { out.append(char(b)); }
+        } else {
+            out.append(char(b ^ HDLC_ESCAPE_BIT));
+            esc = false;
+        }
+    }
+    return out;
+}
+
 // ------------------------------------------------------------------
 // Constructor
 // ------------------------------------------------------------------
@@ -77,6 +113,20 @@ void SerialManager::connect_port(const QString &port_name)
     if (m_serial.open(QIODevice::ReadWrite)) {
         emit connected_changed(true);
         qDebug() << "Connected to" << port_name;
+
+        //Start auto polling every 200 ms
+        poll_step = 0; // add this line in constructor or header
+
+        connect(&m_poll_timer, &QTimer::timeout, this, [this]() {
+            switch (poll_step) {
+            case 0: get_scaling_factor(); break;
+            case 1: get_limits(); break;
+            case 2: get_distance(); break;
+            }
+            poll_step = (poll_step + 1) % 3;
+        });
+        m_poll_timer.start(100);
+
     } else {
         emit connected_changed(false);
         qWarning() << "Failed to open" << port_name << ":" << m_serial.errorString();
@@ -86,6 +136,7 @@ void SerialManager::connect_port(const QString &port_name)
 void SerialManager::disconnect_port()
 {
     if (m_serial.isOpen()) {
+        m_poll_timer.stop();
         m_serial.close();
         emit connected_changed(false);
         qDebug() << "Disconnected";
@@ -110,18 +161,25 @@ quint16 SerialManager::crc16(const QByteArray &data)
 // ------------------------------------------------------------------
 void SerialManager::send_frame(const QByteArray &payload)
 {
-    quint16 crc = crc16(payload);
+    const quint16 crc = crc16(payload);
+
+    QByteArray body;                 // payload + CRC(LSB,MSB)
+    body.append(payload);
+    body.append(char(crc & 0xFF));
+    body.append(char((crc >> 8) & 0xFF));
+
+    const QByteArray bodyEsc = hdlcEscape(body);
 
     QByteArray frame;
-    frame.append((char)0x7E);
-    frame.append(payload);
-    frame.append(static_cast<char>(crc & 0xFF));
-    frame.append(static_cast<char>((crc >> 8) & 0xFF));
-    frame.append((char)0x7E);
+    frame.reserve(bodyEsc.size() + 2);
+    frame.append(char(HDLC_FLAG_SOF));
+    frame.append(bodyEsc);
+    frame.append(char(HDLC_FLAG_SOF));
 
     qDebug() << "TX frame:" << frame.toHex(' ').toUpper();
     m_serial.write(frame);
 }
+
 
 // ------------------------------------------------------------------
 // Commands
@@ -177,27 +235,30 @@ void SerialManager::on_ready_read()
     m_buffer.append(incoming);
     qDebug() << "RX raw:" << incoming.toHex(' ').toUpper();
 
-    int start = m_buffer.indexOf(0x7E);
-    int end   = m_buffer.indexOf(0x7E, start + 1);
+    int start = m_buffer.indexOf(char(HDLC_FLAG_SOF));
+    int end   = m_buffer.indexOf(char(HDLC_FLAG_SOF), start + 1);
 
     while (start != -1 && end != -1 && end > start) {
-        QByteArray frame = m_buffer.mid(start + 1, end - start - 1);
-        parse_frame(frame);
+        QByteArray bodyEsc = m_buffer.mid(start + 1, end - start - 1);
+        QByteArray body    = hdlcUnescape(bodyEsc);   // <-- CRITICAL
+
+        parse_frame(body);   // now "body" = payload + CRC (unescaped)
         m_buffer.remove(0, end + 1);
 
-        start = m_buffer.indexOf(0x7E);
-        end   = m_buffer.indexOf(0x7E, start + 1);
+        start = m_buffer.indexOf(char(HDLC_FLAG_SOF));
+        end   = m_buffer.indexOf(char(HDLC_FLAG_SOF), start + 1);
     }
 }
 
-void SerialManager::parse_frame(const QByteArray &frame)
-{
-    if (frame.size() < 3) return;
 
-    QByteArray payload = frame.left(frame.size() - 2);
-    quint16 recv_crc = static_cast<quint8>(frame[frame.size() - 2]) |
-                       (static_cast<quint8>(frame[frame.size() - 1]) << 8);
-    quint16 calc_crc = crc16(payload);
+void SerialManager::parse_frame(const QByteArray &body)
+{
+    if (body.size() < 3) return;
+
+    QByteArray payload = body.left(body.size() - 2);
+    quint16 recv_crc   = quint8(body[body.size() - 2]) |
+                       (quint8(body[body.size() - 1]) << 8);
+    quint16 calc_crc   = crc16(payload);
 
     if (recv_crc != calc_crc) {
         qWarning() << "CRC mismatch calc=" << QString::number(calc_crc,16)
@@ -205,33 +266,28 @@ void SerialManager::parse_frame(const QByteArray &frame)
         return;
     }
 
-    quint8 cmd = static_cast<quint8>(payload[0]);
-
+    const quint8 cmd = quint8(payload[0]);
     switch (cmd) {
     case 0x10: { // Get Limits
         if (payload.size() < 9) return;
         memcpy(&m_lower_limit, payload.constData() + 1, 4);
         memcpy(&m_upper_limit, payload.constData() + 5, 4);
         emit limits_updated();
-        qDebug() << "Parsed limits:" << m_lower_limit << m_upper_limit;
         break;
     }
-    case 0x13: { // Get Scaling Factor
+    case 0x13: { // Get Scaling Factor (CMD + 2 bytes)
         if (payload.size() < 3) return;
-        quint16 val = (static_cast<quint8>(payload[1]) << 8) |
-                      static_cast<quint8>(payload[2]);
+        quint16 val = (quint8(payload[1]) << 8) | quint8(payload[2]);
         m_scaling_factor = val / 10000.0f;
         emit scaling_updated();
-        qDebug() << "Scaling factor:" << m_scaling_factor;
         break;
     }
-    case 0x14: { // Get Distance
-        if (payload.size() < 3) return;
+    case 0x14: { // Get Distance (CMD + float)
+        if (payload.size() < 5) return;
         float val;
         memcpy(&val, payload.constData() + 1, sizeof(float));
         m_distance = val;
         emit distance_updated();
-        qDebug() << "Distance raw:" << val;
         break;
     }
     default:
@@ -239,3 +295,4 @@ void SerialManager::parse_frame(const QByteArray &frame)
         break;
     }
 }
+
