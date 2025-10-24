@@ -1,170 +1,13 @@
 #include "serialmanager.h"
 #include <QDebug>
-#include <QDataStream>
 #include <cstring>
 
-SerialManager::SerialManager(QObject *parent)
-    : QObject(parent)
-{
-    connect(&m_serial, &QSerialPort::readyRead,
-            this, &SerialManager::onReadyRead);
-}
-
 // ------------------------------------------------------------------
-//  Port discovery / connect / disconnect
+// CRC16 lookup table (same as STM32 firmware, polynomial 0x1021)
 // ------------------------------------------------------------------
-QStringList SerialManager::availablePorts()
-{
-    QStringList list;
-    for (const QSerialPortInfo &info : QSerialPortInfo::availablePorts())
-        list << info.portName();
-    return list;
-}
 
-void SerialManager::connectPort(const QString &portName)
-{
-    if (m_serial.isOpen())
-        m_serial.close();
-
-    m_serial.setPortName(portName);
-    m_serial.setBaudRate(QSerialPort::Baud115200);
-    m_serial.setDataBits(QSerialPort::Data8);
-    m_serial.setParity(QSerialPort::NoParity);
-    m_serial.setStopBits(QSerialPort::OneStop);
-    m_serial.setFlowControl(QSerialPort::NoFlowControl);
-
-    if (m_serial.open(QIODevice::ReadWrite)) {
-        emit connectedChanged(true);
-        qDebug() << "Connected to" << portName;
-    } else {
-        emit connectedChanged(false);
-        qWarning() << "Failed to open" << portName << ":"
-                   << m_serial.errorString();
-    }
-}
-
-void SerialManager::disconnectPort()
-{
-    if (m_serial.isOpen()) {
-        m_serial.close();
-        emit connectedChanged(false);
-        qDebug() << "Disconnected";
-    }
-}
-
-// ------------------------------------------------------------------
-//  0x10 : Get Limits command
-// ------------------------------------------------------------------
-void SerialManager::requestLimits()
-{
-    if (!m_serial.isOpen()) {
-        qWarning() << "Serial not open!";
-        return;
-    }
-
-    // Payload = [ 0x10 ]
-    QByteArray payload;
-    payload.append(static_cast<quint8>(0x10));
-
-    // Calculate CRC16 (same as MCU: 0xA001 polynomial, init 0x0000)
-    quint16 crc = crc16(payload);
-    payload.append(static_cast<quint8>(crc & 0xFF));        // low byte first
-    payload.append(static_cast<quint8>((crc >> 8) & 0xFF)); // high byte second
-
-    // Wrap with HDLC flags 0x7E ... 0x7E
-    QByteArray frame;
-    frame.append(static_cast<quint8>(0x7E));
-    frame.append(payload);
-    frame.append(static_cast<quint8>(0x7E));
-
-    // Debug print what we send
-    qDebug() << "TX frame (" << frame.size() << "bytes):"
-             << frame.toHex(' ').toUpper();
-
-    // Write to serial
-    qint64 written = m_serial.write(frame);
-    if (written == -1)
-        qWarning() << "Serial write failed:" << m_serial.errorString();
-    else
-        qDebug() << "Bytes written:" << written;
-}
-
-// ------------------------------------------------------------------
-//  UART receive & frame parsing
-// ------------------------------------------------------------------
-void SerialManager::onReadyRead()
-{
-    QByteArray incoming = m_serial.readAll();
-    if (incoming.isEmpty())
-        return;
-
-    m_buffer.append(incoming);
-    qDebug() << "RX raw (" << incoming.size() << "):"
-             << incoming.toHex(' ').toUpper();
-
-    int start = m_buffer.indexOf(0x7E);
-    int end   = m_buffer.indexOf(0x7E, start + 1);
-
-    while (start != -1 && end != -1 && end > start) {
-        QByteArray frame = m_buffer.mid(start + 1, end - start - 1);
-        qDebug() << "RX frame extracted:"
-                 << frame.toHex(' ').toUpper();
-
-        parseFrame(frame);
-        m_buffer.remove(0, end + 1);
-
-        start = m_buffer.indexOf(0x7E);
-        end   = m_buffer.indexOf(0x7E, start + 1);
-    }
-}
-
-// ------------------------------------------------------------------
-//  Parse one complete frame
-// ------------------------------------------------------------------
-void SerialManager::parseFrame(const QByteArray &frame)
-{
-    if (frame.size() < 3) {
-        qWarning() << "Frame too short";
-        return;
-    }
-
-    QByteArray payload = frame.left(frame.size() - 2);
-    quint16 recvCrc = static_cast<quint8>(frame[frame.size() - 2]) |
-                      (static_cast<quint8>(frame[frame.size() - 1]) << 8);
-    quint16 calcCrc = crc16(payload);
-
-    if (recvCrc != calcCrc) {
-        qWarning() << "CRC mismatch!"
-                   << "calc=" << QString::number(calcCrc,16)
-                   << "recv=" << QString::number(recvCrc,16);
-        return;
-    }
-
-    quint8 cmd = static_cast<quint8>(payload[0]);
-    if (cmd == 0x10) {
-        if (payload.size() < 9) {
-            qWarning() << "Invalid 0x10 frame length";
-            return;
-        }
-
-        float lower = 0.0f, upper = 0.0f;
-        memcpy(&lower, payload.constData() + 1, 4);
-        memcpy(&upper, payload.constData() + 5, 4);
-
-        m_lowerLimit = lower;
-        m_upperLimit = upper;
-        qDebug() << "Parsed limits:" << lower << upper;
-        emit limitsUpdated();
-    }
-}
-
-// ------------------------------------------------------------------
-//  CRC16 helper (polynomial 0xA001, initial 0x0000, little-endian)
-// ------------------------------------------------------------------
-// ------------------------------------------------------------------
-//  CRC16 lookup table (same as firmware, poly 0x1021, MSB-first)
-// ------------------------------------------------------------------
-static const quint16 crc16_table[256] = {
+// identical version inline:
+static const quint16 crc16_table_inline[256] = {
     0x0000,0x1189,0x2312,0x329B,0x4624,0x57AD,0x6536,0x74BF,
     0x8C48,0x9DC1,0xAF5A,0xBED3,0xCA6C,0xDBE5,0xE97E,0xF8F7,
     0x1081,0x0108,0x3393,0x221A,0x56A5,0x472C,0x75B7,0x643E,
@@ -200,16 +43,199 @@ static const quint16 crc16_table[256] = {
 };
 
 // ------------------------------------------------------------------
-//  CRC16 same as STM32 firmware (table-driven, poly 0x1021, init 0x0000)
+// Constructor
+// ------------------------------------------------------------------
+SerialManager::SerialManager(QObject *parent)
+    : QObject(parent)
+{
+    connect(&m_serial, &QSerialPort::readyRead, this, &SerialManager::on_ready_read);
+}
+
+// ------------------------------------------------------------------
+// Serial port discovery & connection
+// ------------------------------------------------------------------
+QStringList SerialManager::available_ports()
+{
+    QStringList list;
+    for (const QSerialPortInfo &info : QSerialPortInfo::availablePorts())
+        list << info.portName();
+    return list;
+}
+
+void SerialManager::connect_port(const QString &port_name)
+{
+    if (m_serial.isOpen())
+        m_serial.close();
+
+    m_serial.setPortName(port_name);
+    m_serial.setBaudRate(QSerialPort::Baud115200);
+    m_serial.setDataBits(QSerialPort::Data8);
+    m_serial.setParity(QSerialPort::NoParity);
+    m_serial.setStopBits(QSerialPort::OneStop);
+    m_serial.setFlowControl(QSerialPort::NoFlowControl);
+
+    if (m_serial.open(QIODevice::ReadWrite)) {
+        emit connected_changed(true);
+        qDebug() << "Connected to" << port_name;
+    } else {
+        emit connected_changed(false);
+        qWarning() << "Failed to open" << port_name << ":" << m_serial.errorString();
+    }
+}
+
+void SerialManager::disconnect_port()
+{
+    if (m_serial.isOpen()) {
+        m_serial.close();
+        emit connected_changed(false);
+        qDebug() << "Disconnected";
+    }
+}
+
+// ------------------------------------------------------------------
+// CRC16 same as STM32 firmware (table-driven, poly 0x1021, init 0x0000)
 // ------------------------------------------------------------------
 quint16 SerialManager::crc16(const QByteArray &data)
 {
     quint16 crc = 0x0000;
-
     for (int i = 0; i < data.size(); ++i) {
         quint8 byte = static_cast<quint8>(data[i]);
-        crc = crc16_table[(crc >> 8) ^ byte] ^ (crc << 8);
+        crc = crc16_table_inline[(crc >> 8) ^ byte] ^ (crc << 8);
+    }
+    return crc;
+}
+
+// ------------------------------------------------------------------
+// Helper to send HDLC framed command with CRC
+// ------------------------------------------------------------------
+void SerialManager::send_frame(const QByteArray &payload)
+{
+    quint16 crc = crc16(payload);
+
+    QByteArray frame;
+    frame.append((char)0x7E);
+    frame.append(payload);
+    frame.append(static_cast<char>(crc & 0xFF));
+    frame.append(static_cast<char>((crc >> 8) & 0xFF));
+    frame.append((char)0x7E);
+
+    qDebug() << "TX frame:" << frame.toHex(' ').toUpper();
+    m_serial.write(frame);
+}
+
+// ------------------------------------------------------------------
+// Commands
+// ------------------------------------------------------------------
+void SerialManager::get_limits()
+{
+    QByteArray payload;
+    payload.append((char)0x10);
+    send_frame(payload);
+}
+
+void SerialManager::set_lower_limit(float value)
+{
+    float raw = value / m_scaling_factor;   // <-- apply reverse scaling
+    QByteArray payload;
+    payload.append((char)0x11);
+    payload.append(reinterpret_cast<const char*>(&raw), sizeof(float));
+    send_frame(payload);
+}
+
+void SerialManager::set_upper_limit(float value)
+{
+    float raw = value / m_scaling_factor;   // <-- apply reverse scaling
+    QByteArray payload;
+    payload.append((char)0x12);
+    payload.append(reinterpret_cast<const char*>(&raw), sizeof(float));
+    send_frame(payload);
+}
+
+
+void SerialManager::get_scaling_factor()
+{
+    QByteArray payload;
+    payload.append((char)0x13);
+    send_frame(payload);
+}
+
+void SerialManager::get_distance()
+{
+    QByteArray payload;
+    payload.append((char)0x14);
+    send_frame(payload);
+}
+
+// ------------------------------------------------------------------
+// Receive + parse frames
+// ------------------------------------------------------------------
+void SerialManager::on_ready_read()
+{
+    QByteArray incoming = m_serial.readAll();
+    if (incoming.isEmpty()) return;
+
+    m_buffer.append(incoming);
+    qDebug() << "RX raw:" << incoming.toHex(' ').toUpper();
+
+    int start = m_buffer.indexOf(0x7E);
+    int end   = m_buffer.indexOf(0x7E, start + 1);
+
+    while (start != -1 && end != -1 && end > start) {
+        QByteArray frame = m_buffer.mid(start + 1, end - start - 1);
+        parse_frame(frame);
+        m_buffer.remove(0, end + 1);
+
+        start = m_buffer.indexOf(0x7E);
+        end   = m_buffer.indexOf(0x7E, start + 1);
+    }
+}
+
+void SerialManager::parse_frame(const QByteArray &frame)
+{
+    if (frame.size() < 3) return;
+
+    QByteArray payload = frame.left(frame.size() - 2);
+    quint16 recv_crc = static_cast<quint8>(frame[frame.size() - 2]) |
+                       (static_cast<quint8>(frame[frame.size() - 1]) << 8);
+    quint16 calc_crc = crc16(payload);
+
+    if (recv_crc != calc_crc) {
+        qWarning() << "CRC mismatch calc=" << QString::number(calc_crc,16)
+        << "recv=" << QString::number(recv_crc,16);
+        return;
     }
 
-    return crc;
+    quint8 cmd = static_cast<quint8>(payload[0]);
+
+    switch (cmd) {
+    case 0x10: { // Get Limits
+        if (payload.size() < 9) return;
+        memcpy(&m_lower_limit, payload.constData() + 1, 4);
+        memcpy(&m_upper_limit, payload.constData() + 5, 4);
+        emit limits_updated();
+        qDebug() << "Parsed limits:" << m_lower_limit << m_upper_limit;
+        break;
+    }
+    case 0x13: { // Get Scaling Factor
+        if (payload.size() < 3) return;
+        quint16 val = (static_cast<quint8>(payload[1]) << 8) |
+                      static_cast<quint8>(payload[2]);
+        m_scaling_factor = val / 10000.0f;
+        emit scaling_updated();
+        qDebug() << "Scaling factor:" << m_scaling_factor;
+        break;
+    }
+    case 0x14: { // Get Distance
+        if (payload.size() < 3) return;
+        float val;
+        memcpy(&val, payload.constData() + 1, sizeof(float));
+        m_distance = val;
+        emit distance_updated();
+        qDebug() << "Distance raw:" << val;
+        break;
+    }
+    default:
+        qWarning() << "Unknown CMD:" << QString("0x%1").arg(cmd,2,16,QLatin1Char('0')).toUpper();
+        break;
+    }
 }

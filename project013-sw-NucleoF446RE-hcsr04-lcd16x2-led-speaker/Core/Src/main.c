@@ -59,7 +59,9 @@ uint8_t last_index = 0; // index where last interrupt finished
 float lower_limit = 5.0f;
 float upper_limit = 50.0f;
 float scaling_factor = 1.0f;
-
+float eff_lower = 0.0f;
+float eff_upper = 0.0f;
+float distance = 0.00f;
 uint8_t rx_byte;
 /* USER CODE END PV */
 
@@ -130,11 +132,11 @@ void store_distance(float value)
     distance_buffer[distance_index] = value;
     distance_index = (distance_index + 1) % DIST_BUFFER_SIZE;
 }
-void check_distance_warning(float distance){
-    if (distance < lower_limit) {
+void check_distance_warning(float distance,float eff_lower,float eff_upper){
+    if (distance < eff_lower) {
   	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET); // turn led on
   	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET); // turn buzzer off
-    } else if (distance > upper_limit) {
+    } else if (distance > eff_upper) {
   	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET); // turn led off
   	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET); // turn buzzer on
     } else {
@@ -254,16 +256,25 @@ int main(void)
   while (1)
   {
       uint32_t time = read_ultrasonic();
-      float distance = (float)time / 58.0;
+      distance = (float)time / 58.0;
       store_distance(distance); // store in circular buffer
-      check_distance_warning(distance);
-      uint32_t adc_val = read_potentiometer();
 
-      float voltage = (3.3f * adc_val) / 4095.0f;
-      //printf("ADC raw: %lu   Voltage: %.2f V\r\n", adc_val, voltage);
+      //Compute scaling factor in real-time
+      uint32_t adc_val = read_potentiometer();
+      scaling_factor = (3.3f * adc_val) / 4095.0f;
+
+      eff_lower = lower_limit * scaling_factor;
+      eff_upper = upper_limit * scaling_factor;
+
+      check_distance_warning(distance, eff_lower, eff_upper);
+
+      // Update LCD with scaled limits on row 0
+      lcd_put_cur(0, 0);
+      sprintf(buf, "UL:%.1f LL:%.1f", eff_upper, eff_lower);
+      lcd_send_string(buf);
 
       lcd_put_cur(1, 0);
-      sprintf(buf, "S:%.1f Dis:%.1f", voltage, distance);
+      sprintf(buf, "S:%.1f Dis:%.1f", scaling_factor, distance);
       lcd_send_string(buf);
 
       HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);

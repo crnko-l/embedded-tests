@@ -1,6 +1,4 @@
-#ifndef SERIALMANAGER_H
-#define SERIALMANAGER_H
-
+#pragma once
 #include <QObject>
 #include <QSerialPort>
 #include <QSerialPortInfo>
@@ -8,37 +6,50 @@
 class SerialManager : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(bool connected READ isConnected NOTIFY connectedChanged)
-    Q_PROPERTY(float lowerLimit READ lowerLimit NOTIFY limitsUpdated)
-    Q_PROPERTY(float upperLimit READ upperLimit NOTIFY limitsUpdated)
+    Q_PROPERTY(bool connected READ is_connected NOTIFY connected_changed)
+    Q_PROPERTY(float lower_limit READ lower_limit NOTIFY limits_updated)
+    Q_PROPERTY(float upper_limit READ upper_limit NOTIFY limits_updated)
+    Q_PROPERTY(float scaling_factor READ scaling_factor NOTIFY scaling_updated)
+    Q_PROPERTY(float distance READ distance NOTIFY distance_updated)
 
 public:
     explicit SerialManager(QObject *parent = nullptr);
 
-    Q_INVOKABLE QStringList availablePorts();
-    Q_INVOKABLE void connectPort(const QString &portName);
-    Q_INVOKABLE void disconnectPort();
-    Q_INVOKABLE void requestLimits();     // 0x10 Get Limits
+    Q_INVOKABLE QStringList available_ports();
+    Q_INVOKABLE void connect_port(const QString &port_name);
+    Q_INVOKABLE void disconnect_port();
 
-    bool isConnected() const { return m_serial.isOpen(); }
-    float lowerLimit() const { return m_lowerLimit; }
-    float upperLimit() const { return m_upperLimit; }
+    Q_INVOKABLE void get_limits();
+    Q_INVOKABLE void set_lower_limit(float value);
+    Q_INVOKABLE void set_upper_limit(float value);
+    Q_INVOKABLE void get_scaling_factor();
+    Q_INVOKABLE void get_distance();
+
+    bool is_connected() const { return m_serial.isOpen(); }
+    float lower_limit() const { return m_lower_limit; }
+    float upper_limit() const { return m_upper_limit; }
+    float scaling_factor() const { return m_scaling_factor; }
+    float distance() const { return m_distance; }
 
 signals:
-    void connectedChanged(bool connected);
-    void limitsUpdated();
+    void connected_changed(bool connected);
+    void limits_updated();
+    void scaling_updated();
+    void distance_updated();
 
 private slots:
-    void onReadyRead();
+    void on_ready_read();
 
 private:
-    void parseFrame(const QByteArray &frame);
+    void send_frame(const QByteArray &payload);
+    void parse_frame(const QByteArray &frame);
     quint16 crc16(const QByteArray &data);
 
     QSerialPort m_serial;
-    QByteArray  m_buffer;
-    float m_lowerLimit = 0.0f;
-    float m_upperLimit = 0.0f;
-};
+    QByteArray m_buffer;
 
-#endif
+    float m_lower_limit = 0.0f;
+    float m_upper_limit = 0.0f;
+    float m_scaling_factor = 0.0f;
+    float m_distance = 0.0f;
+};

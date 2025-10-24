@@ -1,4 +1,4 @@
 ../Drivers/CMSIS/Include/core_cm4.h:1938:34:__NVIC_SystemReset	4	static,ignoring_inline_asm
-../Core/Src/command_handler.c:11:13:SoftwareReset	8	static
-../Core/Src/command_handler.c:16:6:process_command	40	static
-../Core/Src/command_handler.c:25:6:handle_command	24	static
+../Core/Src/command_handler.c:14:13:SoftwareReset	8	static
+../Core/Src/command_handler.c:19:6:process_command	40	static
+../Core/Src/command_handler.c:28:6:handle_command	32	static
