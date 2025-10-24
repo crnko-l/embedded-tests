@@ -10,6 +10,7 @@
 #define Set_Upper_Limit    0x12
 #define Get_Scaling_Factor 0x13
 #define Get_Distance       0x14
+#define Get_History_Sample   0x15
 
 typedef struct {
     uint8_t code;

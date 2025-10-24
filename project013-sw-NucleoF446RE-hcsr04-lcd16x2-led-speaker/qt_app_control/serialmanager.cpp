@@ -122,10 +122,12 @@ void SerialManager::connect_port(const QString &port_name)
             case 0: get_scaling_factor(); break;
             case 1: get_limits(); break;
             case 2: get_distance(); break;
+            case 3: get_history_sample(); break;
             }
-            poll_step = (poll_step + 1) % 3;
+            poll_step = (poll_step + 1) % 4;
         });
         m_poll_timer.start(100);
+
 
     } else {
         emit connected_changed(false);
@@ -176,7 +178,7 @@ void SerialManager::send_frame(const QByteArray &payload)
     frame.append(bodyEsc);
     frame.append(char(HDLC_FLAG_SOF));
 
-    qDebug() << "TX frame:" << frame.toHex(' ').toUpper();
+    //qDebug() << "TX frame:" << frame.toHex(' ').toUpper();
     m_serial.write(frame);
 }
 
@@ -224,6 +226,13 @@ void SerialManager::get_distance()
     send_frame(payload);
 }
 
+void SerialManager::get_history_sample()
+{
+    QByteArray p;
+    p.append((char)0x15);
+    send_frame(p);
+}
+
 // ------------------------------------------------------------------
 // Receive + parse frames
 // ------------------------------------------------------------------
@@ -233,7 +242,7 @@ void SerialManager::on_ready_read()
     if (incoming.isEmpty()) return;
 
     m_buffer.append(incoming);
-    qDebug() << "RX raw:" << incoming.toHex(' ').toUpper();
+    //qDebug() << "RX raw:" << incoming.toHex(' ').toUpper();
 
     int start = m_buffer.indexOf(char(HDLC_FLAG_SOF));
     int end   = m_buffer.indexOf(char(HDLC_FLAG_SOF), start + 1);
@@ -288,6 +297,14 @@ void SerialManager::parse_frame(const QByteArray &body)
         memcpy(&val, payload.constData() + 1, sizeof(float));
         m_distance = val;
         emit distance_updated();
+        break;
+    }
+    case 0x15: { // History sample
+        if (payload.size() < 5) return;
+        float sample;
+        memcpy(&sample, payload.constData() + 1, sizeof(float));
+        qDebug() << "[C++] history sample parsed =" << sample;
+        emit history_sample_received(sample);
         break;
     }
     default:

@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # --- Find Qt packages ---
-find_package(Qt6 REQUIRED COMPONENTS Quick SerialPort)
+find_package(Qt6 REQUIRED COMPONENTS Quick SerialPort Charts)
 
 qt_standard_project_setup()
 
@@ -26,5 +26,6 @@ qt_add_qml_module(appSTM32QuickSerial
 
 # --- Link Qt libraries ---
 target_link_libraries(appSTM32QuickSerial
-    PRIVATE Qt6::Quick Qt6::SerialPort
+    PRIVATE Qt6::Quick Qt6::SerialPort Qt6::Charts
 )
+

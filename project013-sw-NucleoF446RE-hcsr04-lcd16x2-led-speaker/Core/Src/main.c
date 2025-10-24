@@ -26,6 +26,7 @@
 #include "i2c-lcd.h"
 #include "hdlc.h"
 #include "command_handler.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,6 +56,7 @@ UART_HandleTypeDef huart2;
 float distance_buffer[DIST_BUFFER_SIZE];
 uint8_t distance_index = 0;
 uint8_t last_index = 0; // index where last interrupt finished
+uint8_t last_sent_index = 0;
 
 float lower_limit = 5.0f;
 float upper_limit = 50.0f;
@@ -132,6 +134,7 @@ void store_distance(float value)
     distance_buffer[distance_index] = value;
     distance_index = (distance_index + 1) % DIST_BUFFER_SIZE;
 }
+
 void check_distance_warning(float distance,float eff_lower,float eff_upper){
     if (distance < eff_lower) {
   	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET); // turn led on
@@ -152,6 +155,7 @@ uint32_t read_potentiometer() {
     HAL_ADC_Stop(&hadc1);
     return adc_val;
 }
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART2)

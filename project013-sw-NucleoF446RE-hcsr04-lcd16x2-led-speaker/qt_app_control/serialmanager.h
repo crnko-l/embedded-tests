@@ -25,6 +25,7 @@ public:
     Q_INVOKABLE void set_upper_limit(float value);
     Q_INVOKABLE void get_scaling_factor();
     Q_INVOKABLE void get_distance();
+    Q_INVOKABLE void get_history_sample();
 
     bool is_connected() const { return m_serial.isOpen(); }
     float lower_limit() const { return m_lower_limit; }
@@ -37,6 +38,7 @@ signals:
     void limits_updated();
     void scaling_updated();
     void distance_updated();
+    void history_sample_received(float sample);
 
 private slots:
     void on_ready_read();
@@ -54,6 +56,7 @@ private:
     float m_scaling_factor = 0.0f;
     float m_distance = 0.0f;
     QTimer m_poll_timer;
+    QTimer history_timer;
     int poll_step = 0;
 
 };

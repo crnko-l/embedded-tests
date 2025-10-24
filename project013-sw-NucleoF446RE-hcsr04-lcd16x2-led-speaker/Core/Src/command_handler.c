@@ -11,6 +11,10 @@ extern float eff_upper;
 extern float distance;
 extern ADC_HandleTypeDef hadc1;
 
+extern float distance_buffer[];
+extern uint8_t distance_index;
+extern uint8_t last_sent_index;
+
 static void SoftwareReset(void)
 {
     NVIC_SystemReset();
@@ -80,8 +84,24 @@ void handle_command(const CommandPacket *pkt, hdlc_t *hdlc_rx)
             hdlc_tx_raw_frame_oneshot(hdlc_rx->tx_buffer, 1 + sizeof(float));
             break;
 
+        case Get_History_Sample:
+        {
+            // If no new data, return nothing
+            if (last_sent_index == distance_index)
+                break; // no frame sent
+
+            float sample = distance_buffer[last_sent_index];
+            hdlc_rx->tx_buffer[0] = Get_History_Sample;
+            memcpy(&hdlc_rx->tx_buffer[1], &sample, sizeof(float));
+            hdlc_tx_raw_frame_oneshot(hdlc_rx->tx_buffer, 1 + sizeof(float));
+            last_sent_index = (last_sent_index + 1) % DIST_BUFFER_SIZE;
+            break;
+        }
+
         default:
             printf("Unknown cmd: 0x%02X\r\n", pkt->code);
             break;
+
+
     }
 }
